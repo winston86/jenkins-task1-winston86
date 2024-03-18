@@ -1,7 +1,6 @@
 pipeline {
     agent any
     environment { 
-	    //test webhook 1
 		APP_PORT = '9090'
 	}
     stages {
