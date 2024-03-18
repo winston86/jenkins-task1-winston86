@@ -1,0 +1,34 @@
+name: Check Jenkins pipeline
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  checking-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checks-out your repository
+        uses: actions/checkout@v3
+  
+      - name: Prepare Jenkinsfile Runner
+        run: |
+          curl -O https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.zip
+          unzip apache-maven-3.9.6-bin.zip
+          rm apache-maven-3.9.6-bin.zip
+
+      - name: Run Jenkinsfile
+        id: run_jenkinsfile
+        run: |
+          docker run --rm -v $(pwd):/workspace -v $(which mvn):/mvn -v /local/jenkinsHome:/jenkinsHome \
+              -e PATH=$PATH:/opt/java/openjdk/jre/bin:/workspace/apache-maven-3.9.6/bin \
+              jenkins/jenkinsfile-runner --runHome /jenkinsHome
+
+      - name: Check Tests Result
+        run: 'if grep -q "Tests run: 4, Failures: 0" /local/jenkinsHome/jobs/job/builds/1/log;  then exit 0; else exit 1; fi'
+
+      - name: Check add Contacts
+        run: 'if grep -q "@Test checkAddContacts()" /local/jenkinsHome/jobs/job/builds/1/log;  then exit 0; else exit 1; fi'
+        
